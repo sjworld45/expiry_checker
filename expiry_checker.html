@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Expiry Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        input[type="date"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .check-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .check-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .check-btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .result.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .result.expired {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a5a);
+            color: white;
+            border: 2px solid #ff5252;
+        }
+
+        .result.fresh {
+            background: linear-gradient(45deg, #51cf66, #40c057);
+            color: white;
+            border: 2px solid #51cf66;
+        }
+
+        .result.today {
+            background: linear-gradient(45deg, #ffd43b, #fab005);
+            color: #333;
+            border: 2px solid #ffd43b;
+        }
+
+        .icon {
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+
+        .days-info {
+            font-size: 0.9rem;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .current-date {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏷️ Expiry Checker</h1>
+        <p class="subtitle">Check if your product is still fresh or expired</p>
+        
+        <div class="input-group">
+            <label for="expiryDate">Product Expiry Date:</label>
+            <input type="date" id="expiryDate" required>
+        </div>
+        
+        <button class="check-btn" onclick="checkExpiry()">Check Expiry Status</button>
+        
+        <div id="result" class="result"></div>
+        
+        <div class="current-date">
+            Today's date: <span id="currentDate"></span>
+        </div>
+    </div>
+
+    <script>
+        // Display current date
+        function updateCurrentDate() {
+            const today = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            document.getElementById('currentDate').textContent = 
+                today.toLocaleDateString('en-US', options);
+        }
+
+        function checkExpiry() {
+            const expiryInput = document.getElementById('expiryDate');
+            const resultDiv = document.getElementById('result');
+            
+            if (!expiryInput.value) {
+                resultDiv.className = 'result expired show';
+                resultDiv.innerHTML = '<span class="icon">⚠️</span>Please select an expiry date!';
+                return;
+            }
+            
+            const expiryDate = new Date(expiryInput.value);
+            const today = new Date();
+            
+            // Set time to start of day for accurate comparison
+            today.setHours(0, 0, 0, 0);
+            expiryDate.setHours(0, 0, 0, 0);
+            
+            const timeDiff = expiryDate.getTime() - today.getTime();
+            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            let resultClass, resultText, icon, daysInfo;
+            
+            if (daysDiff < 0) {
+                // Expired
+                const daysExpired = Math.abs(daysDiff);
+                resultClass = 'expired';
+                icon = '🤢';
+                resultText = 'EXPIRED!';
+                daysInfo = `This product expired ${daysExpired} day${daysExpired !== 1 ? 's' : ''} ago.`;
+            } else if (daysDiff === 0) {
+                // Expires today
+                resultClass = 'today';
+                icon = '⚠️';
+                resultText = 'EXPIRES TODAY!';
+                daysInfo = 'Use this product today or it will expire.';
+            } else {
+                // Still fresh
+                resultClass = 'fresh';
+                icon = '✅';
+                resultText = 'FRESH & SAFE';
+                daysInfo = `This product expires in ${daysDiff} day${daysDiff !== 1 ? 's' : ''}.`;
+            }
+            
+            resultDiv.className = `result ${resultClass}`;
+            resultDiv.innerHTML = `
+                <span class="icon">${icon}</span>${resultText}
+                <div class="days-info">${daysInfo}</div>
+            `;
+            
+            // Trigger animation
+            setTimeout(() => {
+                resultDiv.classList.add('show');
+            }, 50);
+        }
+
+        // Allow Enter key to trigger check
+        document.getElementById('expiryDate').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkExpiry();
+            }
+        });
+
+        // Auto-check when date changes
+        document.getElementById('expiryDate').addEventListener('change', function() {
+            if (this.value) {
+                checkExpiry();
+            }
+        });
+
+        // Initialize current date display
+        updateCurrentDate();
+    </script>
+</body>
+</html>
